@@ -66,30 +66,39 @@ def safenet_engine(message):
     analytics['total_scanned'] += 1
     
     msg_l = message.lower()
-    is_mock_toxic_list = any(w in msg_l for w in ["worthless", "useless", "terrible", "nobody likes you", "delete your account", "hate", "stupid", "idiot", "shut up", "kill", "loser", "ugly", "dumb"])
+    is_mock_toxic_list = any(w in msg_l for w in [
+        "worthless", "useless", "terrible", "nobody likes you", 
+        "delete your account", "hate", "stupid", "idiot", "shut up", 
+        "kill", "loser", "ugly", "dumb", "fuck", "bitch", "shit", 
+        "ass", "bastard", "crap", "whore", "cunt", "slut", "dick"
+    ])
 
     if USE_MOCK:
         from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+        from better_profanity import profanity
+        
         analyzer = SentimentIntensityAnalyzer()
         vs = analyzer.polarity_scores(message)
         
-        is_toxic = is_mock_toxic_list or (vs['compound'] <= -0.4) or (vs['neg'] >= 0.4)
+        has_profanity = profanity.contains_profanity(message)
+        
+        is_toxic = is_mock_toxic_list or has_profanity or (vs['compound'] <= -0.4) or (vs['neg'] >= 0.4)
         
         if is_toxic:
-            base_score = 0.70 + (vs['neg'] * 0.3) + abs(vs['compound'] * 0.1)
+            base_score = 0.85 if has_profanity else (0.70 + (vs['neg'] * 0.3) + abs(vs['compound'] * 0.1))
             score = min(0.99, base_score)
-            if is_mock_toxic_list and score < 0.9:
-                score = 0.95
+            if (is_mock_toxic_list or has_profanity) and score < 0.9:
+                score = 0.97
         else:
             score = max(0.01, vs['neg'] * 0.5)
 
         label = 'toxic' if is_toxic else 'safe'
         
         # Dynamic emotion mapping from Vader
-        anger_score = vs['neg'] * 0.6
-        hate_score = vs['neg'] * 0.4
-        neutral_score = vs['neu']
-        positive_score = vs['pos']
+        anger_score = 0.8 if has_profanity else vs['neg'] * 0.6
+        hate_score = 0.6 if has_profanity else vs['neg'] * 0.4
+        neutral_score = 0.1 if has_profanity else vs['neu']
+        positive_score = 0.0 if has_profanity else vs['pos']
     else:
         # Real Engine
         toxic_result = toxicity_detector(message)[0]

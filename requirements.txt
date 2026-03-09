@@ -1,2 +1,3 @@
 flask
 vaderSentiment
+better_profanity
