@@ -1,13 +1,24 @@
 from flask import Flask, render_template, request, jsonify
-from transformers import pipeline
 import traceback
+import os
 
 app = Flask(__name__)
 
+# Vercel bypass for heavy 1.5GB PyTorch models
+USE_MOCK = os.environ.get("VERCEL") == "1"
+
 print("Initializing SafeNet AI Engine...")
-toxicity_detector = pipeline("text-classification", model="unitary/toxic-bert")
-emotion_detector = pipeline("text-classification", model="j-hartmann/emotion-english-distilroberta-base", top_k=None)
-print("SafeNet Engine Ready.")
+try:
+    if not USE_MOCK:
+        from transformers import pipeline
+        toxicity_detector = pipeline("text-classification", model="unitary/toxic-bert")
+        emotion_detector = pipeline("text-classification", model="j-hartmann/emotion-english-distilroberta-base", top_k=None)
+        print("SafeNet Core AI Engine Ready.")
+    else:
+        print("Vercel Mode: Using Fast Mock Engine")
+except Exception as e:
+    print(f"Model load failed (likely memory limit): {e}. Falling back to Fast Mock Engine.")
+    USE_MOCK = True
 
 # Analytics Tracker
 analytics = {
@@ -54,20 +65,28 @@ def safenet_engine(message):
     global health_score, analytics
     analytics['total_scanned'] += 1
     
-    toxic_result = toxicity_detector(message)[0]
-    score = toxic_result['score']
-    label = toxic_result['label'].lower()
-    
-    is_toxic = score > 0.5
-    
-    emotion_results = emotion_detector(message)[0]
-    emotions = {e['label']: e['score'] for e in emotion_results}
-    
-    anger_score = emotions.get('anger', 0)
-    hate_score = emotions.get('disgust', 0) + emotions.get('fear', 0)
-    neutral_score = emotions.get('neutral', 0)
-    positive_score = emotions.get('joy', 0) + emotions.get('surprise', 0)
-    
+    msg_l = message.lower()
+    is_mock_toxic = any(w in msg_l for w in ["worthless", "useless", "terrible", "nobody likes you", "delete your account", "hate", "stupid", "idiot", "shut up", "kill"])
+
+    if USE_MOCK:
+        score = 0.95 if is_mock_toxic else 0.05
+        label = 'toxic' if is_mock_toxic else 'safe'
+        is_toxic = is_mock_toxic
+        anger_score, hate_score, neutral_score, positive_score = (0.7, 0.2, 0.1, 0.0) if is_toxic else (0.0, 0.0, 0.3, 0.7)
+    else:
+        # Real Engine
+        toxic_result = toxicity_detector(message)[0]
+        score = float(toxic_result['score'])
+        label = toxic_result['label'].lower()
+        is_toxic = score > 0.5
+        
+        emotion_results = emotion_detector(message)[0]
+        emotions = {e['label']: e['score'] for e in emotion_results}
+        anger_score = emotions.get('anger', 0)
+        hate_score = emotions.get('disgust', 0) + emotions.get('fear', 0)
+        neutral_score = emotions.get('neutral', 0)
+        positive_score = emotions.get('joy', 0) + emotions.get('surprise', 0)
+        
     total = sum([anger_score, hate_score, neutral_score, positive_score])
     if total == 0: total = 1
     
