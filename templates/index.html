@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafeNet Analyst Workspace</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+
+<body>
+    <div class="ambient-background">
+        <div class="ambient-glow glow-1"></div>
+        <div class="ambient-glow glow-2"></div>
+    </div>
+
+    <nav class="navbar">
+        <div class="nav-brand">
+            <i class="ph-fill ph-shield-check brand-icon"></i>
+            <span class="brand-text">SafeNet <span class="badge">Enterprise</span></span>
+        </div>
+        <div class="nav-links">
+            <span class="status-indicator"><span class="dot live"></span> Model Active v2.5</span>
+        </div>
+    </nav>
+
+    <main class="dashboard">
+        <div class="bento-grid">
+
+            <!-- 1. Analyzer (Playground) -->
+            <div class="bento-card col-span-2 analyzer-card">
+                <div class="card-header">
+                    <h3><i class="ph ph-terminal-window"></i> AI Playground</h3>
+                </div>
+                <div class="card-body">
+                    <div class="input-wrapper">
+                        <textarea id="message"
+                            placeholder="Input text payload for safety & sentiment analysis..."></textarea>
+                    </div>
+                    <div class="analyzer-actions">
+                        <button id="analyze-btn" class="btn primary-btn">
+                            <i class="ph ph-sparkle"></i> Analyze Payload
+                        </button>
+                    </div>
+
+                    <div class="processing-overlay hidden" id="processing-state">
+                        <div class="spinner"></div>
+                        <span style="font-size: 13px; font-weight: 500; color: #cbd5e1;">Running inferences...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. AI Judgment Result & Rewrite -->
+            <div class="bento-card col-span-2 result-card hidden" id="result-card">
+                <div class="result-layout">
+                    <div class="result-status" id="result-status-box">
+                        <i class="ph-fill ph-check-circle success-icon" id="result-icon"></i>
+                        <div>
+                            <h2 id="result-title">Analysis Complete</h2>
+                            <p id="analysis-text">Waiting for payload...</p>
+                        </div>
+                    </div>
+
+                    <div class="rewrite-panel hidden" id="suggestion-card">
+                        <div class="rewrite-header">
+                            <i class="ph-fill ph-magic-wand"></i> SafeNet Content Rewrite
+                        </div>
+                        <p class="rewrite-text" id="suggested-message">...</p>
+                        <div class="rewrite-actions">
+                            <button class="btn accent-btn" id="btn-use-suggestion">
+                                <i class="ph ph-check"></i> Apply Revision
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. Toxicity Meter -->
+            <div class="bento-card metric-card">
+                <div class="card-header">
+                    <h3><i class="ph ph-gauge"></i> Toxicity Index</h3>
+                </div>
+                <div class="card-body center-content">
+                    <div class="radial-progress" id="toxicity-radial">
+                        <svg viewBox="0 0 100 100">
+                            <circle class="bg-circle" cx="50" cy="50" r="40"></circle>
+                            <circle class="progress-circle" id="tox-circle" cx="50" cy="50" r="40"
+                                stroke-dasharray="251.2" stroke-dashoffset="251.2"></circle>
+                        </svg>
+                        <div class="radial-value">
+                            <span id="meter-percent">0</span><span class="unit">%</span>
+                        </div>
+                    </div>
+                    <p class="metric-label" id="tox-label">Awaiting input</p>
+                </div>
+            </div>
+
+            <!-- 4. Emotion Metrics -->
+            <div class="bento-card emotion-card">
+                <div class="card-header">
+                    <h3><i class="ph ph-brain"></i> Sentiment Matrix</h3>
+                </div>
+                <div class="card-body">
+                    <div class="emo-list">
+                        <div class="emo-item">
+                            <div class="emo-info"><span>Anger</span> <span id="val-anger">0%</span></div>
+                            <div class="emo-bar">
+                                <div class="emo-fill fill-anger" id="bar-anger"></div>
+                            </div>
+                        </div>
+                        <div class="emo-item">
+                            <div class="emo-info"><span>Hate</span> <span id="val-hate">0%</span></div>
+                            <div class="emo-bar">
+                                <div class="emo-fill fill-hate" id="bar-hate"></div>
+                            </div>
+                        </div>
+                        <div class="emo-item">
+                            <div class="emo-info"><span>Neutral</span> <span id="val-neutral">0%</span></div>
+                            <div class="emo-bar">
+                                <div class="emo-fill fill-neutral" id="bar-neutral"></div>
+                            </div>
+                        </div>
+                        <div class="emo-item">
+                            <div class="emo-info"><span>Positive</span> <span id="val-positive">0%</span></div>
+                            <div class="emo-bar">
+                                <div class="emo-fill fill-positive" id="bar-positive"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5. Advanced Chat & Coach Monitor -->
+            <div class="bento-card chat-card col-span-2">
+                <div class="card-header">
+                    <h3><i class="ph ph-chats-circle"></i> Conversation Monitor</h3>
+                </div>
+                <div class="card-body conversation-body">
+                    <div class="chat-feed" id="chat-feed">
+                        <div class="chat-msg">
+                            <div class="avatar bg-gradient-1">U1</div>
+                            <div class="msg-content">Hello</div>
+                        </div>
+                        <div class="chat-msg">
+                            <div class="avatar bg-gradient-2">U2</div>
+                            <div class="msg-content">Hi there. Building something cool today.</div>
+                        </div>
+                    </div>
+
+                    <!-- NEW: Conversation Health Meter -->
+                    <div class="health-meter-container">
+                        <div class="health-header">
+                            <span>Conversation Health Score</span>
+                            <span id="health-score-val" class="health-val text-green">100%</span>
+                        </div>
+                        <div class="health-bar-bg">
+                            <div class="health-bar-fill fill-green" id="health-bar-fill" style="width:100%"></div>
+                        </div>
+                    </div>
+
+                    <!-- NEW: Coach Advice Panel -->
+                    <div class="coach-panel hidden" id="coach-panel">
+                        <div class="coach-header">
+                            <i class="ph-fill ph-chalkboard-teacher"></i> SafeNet Conversation Coach
+                        </div>
+                        <div class="coach-title" id="coach-title">⚠ Negative tone detected</div>
+                        <div class="coach-tip">
+                            <strong>Tip:</strong> <span id="coach-tip-text">Try expressing feedback in a respectful
+                                way.</span>
+                        </div>
+                        <div class="coach-actions">
+                            <button class="btn accent-btn" id="btn-coach-rewrite"><i class="ph ph-pencil-simple"></i>
+                                Rewrite Message</button>
+                            <button class="btn ghost-btn" id="btn-coach-ignore">Ignore Advice</button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- 6. Overview Analytics -->
+            <div class="bento-card stats-card col-span-2">
+                <div class="card-header">
+                    <h3><i class="ph ph-chart-line-up"></i> Platform Analytics</h3>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <span class="stat-label">Payloads Analyzed</span>
+                        <span class="stat-value" id="stat-scanned">128</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">Threats Mitigated</span>
+                        <span class="stat-value text-red" id="stat-toxic">24</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">Interventions</span>
+                        <span class="stat-value text-amber" id="stat-warnings">18</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">Safe Interactions</span>
+                        <span class="stat-value text-green" id="stat-safe">104</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const analyzeBtn = document.getElementById('analyze-btn');
+            const messageInput = document.getElementById('message');
+
+            // Rewrite / Coach Logic
+            const btnUseSuggestion = document.getElementById('btn-use-suggestion');
+            const suggestionCard = document.getElementById('suggestion-card');
+            const suggestedMessageText = document.getElementById('suggested-message');
+            let cachedSuggestion = "";
+
+            // UI Component Refs
+            const resultCard = document.getElementById('result-card');
+            const processingState = document.getElementById('processing-state');
+            const resultIcon = document.getElementById('result-icon');
+            const resultTitle = document.getElementById('result-title');
+            const analysisText = document.getElementById('analysis-text');
+
+            // SVG Radial Meter
+            const meterPercent = document.getElementById('meter-percent');
+            const toxCircle = document.getElementById('tox-circle');
+            const toxLabel = document.getElementById('tox-label');
+            const circumference = 251.2;
+
+            const chatFeed = document.getElementById('chat-feed');
+
+            // Analytics 
+            const statScanned = document.getElementById('stat-scanned');
+            const statToxic = document.getElementById('stat-toxic');
+            const statSafe = document.getElementById('stat-safe');
+            const statWarnings = document.getElementById('stat-warnings');
+
+            // Emotion
+            const valAnger = document.getElementById('val-anger');
+            const valHate = document.getElementById('val-hate');
+            const valNeutral = document.getElementById('val-neutral');
+            const valPositive = document.getElementById('val-positive');
+            const barAnger = document.getElementById('bar-anger');
+            const barHate = document.getElementById('bar-hate');
+            const barNeutral = document.getElementById('bar-neutral');
+            const barPositive = document.getElementById('bar-positive');
+
+            // Initial fetch to sync analytics
+            fetch('/dashboard').then(res => res.json()).then(data => {
+                updateAnalytics(data);
+            }).catch(e => console.log("Using default mock analytics data."));
+
+            analyzeBtn.addEventListener('click', async () => {
+                triggerAnalysis(messageInput.value);
+            });
+
+            btnUseSuggestion.addEventListener('click', () => {
+                applyRewrite();
+            });
+
+            document.getElementById('btn-coach-rewrite').addEventListener('click', () => {
+                applyRewrite();
+            });
+
+            document.getElementById('btn-coach-ignore').addEventListener('click', () => {
+                document.getElementById('coach-panel').classList.add('hidden');
+            });
+
+            function applyRewrite() {
+                messageInput.value = cachedSuggestion;
+                resultCard.classList.add('hidden');
+                suggestionCard.classList.add('hidden');
+                document.getElementById('coach-panel').classList.add('hidden');
+                triggerAnalysis(cachedSuggestion);
+            }
+
+            async function triggerAnalysis(messageText) {
+                const message = messageText.trim();
+                if (!message) return;
+
+                // Reset UI
+                resultCard.classList.add('hidden');
+                suggestionCard.classList.add('hidden');
+                document.getElementById('coach-panel').classList.add('hidden');
+                processingState.classList.remove('hidden');
+                analyzeBtn.disabled = true;
+
+                // Add to Chat as typing...
+                const typingMsg = document.createElement('div');
+                typingMsg.className = 'chat-msg';
+                typingMsg.innerHTML = `<div class="avatar bg-gradient-1">U1</div><div class="msg-content typing-dots">● ● ●</div>`;
+                chatFeed.appendChild(typingMsg);
+                chatFeed.scrollTop = chatFeed.scrollHeight;
+
+                try {
+                    const response = await fetch('/analyze', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ message: message })
+                    });
+                    const data = await response.json();
+
+                    setTimeout(() => {
+                        processingState.classList.add('hidden');
+                        analyzeBtn.disabled = false;
+
+                        showResultUI(data, message);
+                        updateAnalytics(data.analytics_update);
+
+                        chatFeed.removeChild(typingMsg);
+                        addChatMessage(message, data.status === 'toxic');
+
+                    }, 800);
+
+                } catch (error) {
+                    analyzeBtn.disabled = false;
+                    processingState.classList.add('hidden');
+                    console.error("Error connected to API");
+                }
+            }
+
+            function showResultUI(data, originalMsg) {
+                resultCard.classList.remove('hidden');
+                resultCard.className = 'bento-card col-span-2 result-card';
+
+                let percent = Math.round(data.confidence * 100);
+                if (data.status === 'safe') {
+                    percent = 100 - percent;
+                    if (percent > 30) percent = 15;
+                }
+
+                // Update Radial SVG Math
+                const offset = circumference - (percent / 100) * circumference;
+                toxCircle.style.strokeDashoffset = offset;
+
+                // Animate Numbers
+                animateValueCountUp(meterPercent, percent);
+
+                if (percent < 30) {
+                    toxCircle.style.stroke = 'var(--success)';
+                    toxLabel.textContent = 'Nominal / Safe';
+                } else if (percent < 70) {
+                    toxCircle.style.stroke = 'var(--warning)';
+                    toxLabel.textContent = 'Elevated Risk';
+                } else {
+                    toxCircle.style.stroke = 'var(--danger)';
+                    toxLabel.textContent = 'Critical Toxicity';
+                }
+
+                // Result Panel
+                if (data.status === 'toxic') {
+                    resultCard.classList.add('danger');
+                    resultIcon.className = 'ph-fill ph-warning-circle danger-icon';
+                    resultTitle.innerHTML = 'Policy Violation Prevented';
+                    analysisText.innerHTML = `Payload rejected. Toxicity threshold exceeded. Action taken: Blocked.`;
+
+                    if (data.suggested_rewrite) {
+                        suggestionCard.classList.remove('hidden');
+                        cachedSuggestion = data.suggested_rewrite;
+                        suggestedMessageText.innerHTML = `"${data.suggested_rewrite}"`;
+                    }
+                } else {
+                    resultCard.classList.add('success');
+                    resultIcon.className = 'ph-fill ph-check-circle success-icon';
+                    resultTitle.innerHTML = 'Payload Verified';
+                    analysisText.innerHTML = `No harmful signatures detected.`;
+                    suggestionCard.classList.add('hidden');
+                }
+
+                // Update Emotion Panel
+                if (data.emotions) {
+                    const em = data.emotions;
+                    valAnger.textContent = em.Anger + '%'; barAnger.style.width = em.Anger + '%';
+                    valHate.textContent = em.Hate + '%'; barHate.style.width = em.Hate + '%';
+                    valNeutral.textContent = em.Neutral + '%'; barNeutral.style.width = em.Neutral + '%';
+                    valPositive.textContent = em.Positive + '%'; barPositive.style.width = em.Positive + '%';
+                }
+
+                // Conversation Health Meter Update
+                if (data.health_score !== undefined) {
+                    const hScore = data.health_score;
+                    document.getElementById('health-score-val').textContent = hScore + '%';
+
+                    const healthFill = document.getElementById('health-bar-fill');
+                    healthFill.style.width = hScore + '%';
+
+                    let hColor = 'var(--success)';
+                    if (hScore < 40) hColor = 'var(--danger)';
+                    else if (hScore < 70) hColor = 'var(--warning)';
+
+                    healthFill.style.background = hColor;
+                    document.getElementById('health-score-val').style.color = hColor;
+                }
+
+                // Coach Panel Update
+                if (data.coach_advice && data.coach_advice.title) {
+                    const coachPanel = document.getElementById('coach-panel');
+                    coachPanel.classList.remove('hidden');
+                    document.getElementById('coach-title').innerHTML = data.coach_advice.title;
+                    document.getElementById('coach-tip-text').innerText = data.coach_advice.tip;
+
+                    if (data.suggested_rewrite) {
+                        cachedSuggestion = data.suggested_rewrite;
+                    }
+                }
+            }
+
+            function addChatMessage(msgText, isToxic) {
+                const msgNode = document.createElement('div');
+                if (isToxic) {
+                    msgNode.className = 'chat-msg toxic';
+                    msgNode.innerHTML = `
+                        <div class="avatar bg-gradient-1">U1</div>
+                        <div class="msg-content">
+                            <span>${msgText}</span>
+                            <div class="msg-alert"><i class="ph ph-shield-warning"></i> Undelivered: Policy Violation</div>
+                        </div>`;
+                } else {
+                    msgNode.className = 'chat-msg';
+                    msgNode.innerHTML = `
+                        <div class="avatar bg-gradient-1">U1</div>
+                        <div class="msg-content">${msgText}</div>`;
+                }
+
+                chatFeed.appendChild(msgNode);
+                chatFeed.scrollTop = chatFeed.scrollHeight;
+            }
+
+            function updateAnalytics(analyticsData) {
+                if (!analyticsData) return;
+                animateValueCountUp(statScanned, analyticsData.total_scanned);
+                animateValueCountUp(statToxic, analyticsData.toxic_messages);
+                animateValueCountUp(statSafe, analyticsData.safe_messages);
+                animateValueCountUp(statWarnings, analyticsData.warnings_issued);
+            }
+
+            function animateValueCountUp(obj, val) {
+                if (parseInt(obj.textContent) !== val) {
+                    obj.style.transform = 'scale(1.1)';
+                    setTimeout(() => {
+                        obj.textContent = val;
+                        obj.style.transform = 'scale(1)';
+                    }, 150);
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>
