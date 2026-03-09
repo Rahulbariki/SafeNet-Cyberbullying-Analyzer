@@ -1,0 +1,42 @@
+Initializing SafeNet AI Engine...
+SafeNet Core AI Engine Ready.
+{
+  "status": "toxic",
+  "message_outcome": "\u26a0 Hidden by SafeNet",
+  "confidence": 0.9558069109916687,
+  "emotions": {
+    "Anger": 97,
+    "Hate": 1,
+    "Neutral": 0,
+    "Positive": 0
+  },
+  "warning": "SafeNet Warning:\nThis message may harm someone.",
+  "suggested_rewrite": "Please give me a chance to finish speaking.",
+  "health_score": 65,
+  "coach_advice": {
+    "title": "\u26a0 Conversation Tone Warning",
+    "tip": "This conversation is becoming negative. Try using respectful language to keep the discussion constructive."
+  },
+  "shield_action": "Comment blocked",
+  "analytics_update": {
+    "total_scanned": 129,
+    "toxic_messages": 25,
+    "warnings_issued": 19,
+    "safe_messages": 104,
+    "chart_data": [
+      19,
+      3,
+      5,
+      2,
+      3,
+      10,
+      15,
+      20,
+      10,
+      5,
+      8,
+      24,
+      33
+    ]
+  }
+}

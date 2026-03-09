@@ -1,0 +1,39 @@
+Initializing SafeNet AI Engine...
+SafeNet Core AI Engine Ready.
+{
+  "status": "safe",
+  "message_outcome": "\u2705 Message delivered successfully",
+  "confidence": 0.998857106314972,
+  "emotions": {
+    "Anger": 2,
+    "Hate": 0,
+    "Neutral": 54,
+    "Positive": 41
+  },
+  "warning": "No warning needed.",
+  "suggested_rewrite": null,
+  "health_score": 100,
+  "coach_advice": null,
+  "shield_action": "Message allowed",
+  "analytics_update": {
+    "total_scanned": 129,
+    "toxic_messages": 24,
+    "warnings_issued": 18,
+    "safe_messages": 105,
+    "chart_data": [
+      19,
+      3,
+      5,
+      2,
+      3,
+      10,
+      15,
+      20,
+      10,
+      5,
+      8,
+      24,
+      22
+    ]
+  }
+}

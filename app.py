@@ -66,13 +66,30 @@ def safenet_engine(message):
     analytics['total_scanned'] += 1
     
     msg_l = message.lower()
-    is_mock_toxic = any(w in msg_l for w in ["worthless", "useless", "terrible", "nobody likes you", "delete your account", "hate", "stupid", "idiot", "shut up", "kill"])
+    is_mock_toxic_list = any(w in msg_l for w in ["worthless", "useless", "terrible", "nobody likes you", "delete your account", "hate", "stupid", "idiot", "shut up", "kill", "loser", "ugly", "dumb"])
 
     if USE_MOCK:
-        score = 0.95 if is_mock_toxic else 0.05
-        label = 'toxic' if is_mock_toxic else 'safe'
-        is_toxic = is_mock_toxic
-        anger_score, hate_score, neutral_score, positive_score = (0.7, 0.2, 0.1, 0.0) if is_toxic else (0.0, 0.0, 0.3, 0.7)
+        from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+        analyzer = SentimentIntensityAnalyzer()
+        vs = analyzer.polarity_scores(message)
+        
+        is_toxic = is_mock_toxic_list or (vs['compound'] <= -0.4) or (vs['neg'] >= 0.4)
+        
+        if is_toxic:
+            base_score = 0.70 + (vs['neg'] * 0.3) + abs(vs['compound'] * 0.1)
+            score = min(0.99, base_score)
+            if is_mock_toxic_list and score < 0.9:
+                score = 0.95
+        else:
+            score = max(0.01, vs['neg'] * 0.5)
+
+        label = 'toxic' if is_toxic else 'safe'
+        
+        # Dynamic emotion mapping from Vader
+        anger_score = vs['neg'] * 0.6
+        hate_score = vs['neg'] * 0.4
+        neutral_score = vs['neu']
+        positive_score = vs['pos']
     else:
         # Real Engine
         toxic_result = toxicity_detector(message)[0]
